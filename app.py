@@ -6,13 +6,26 @@ import os
 # Retrieve AWS credentials and S3 bucket name from environment variables
 S3_BUCKET = os.getenv('S3_BUCKET')
 AWS_REGION = os.getenv('AWS_DEFAULT_REGION')
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+
+# Debugging: Print environment variable values to ensure they are set
+print(f"S3_BUCKET: {S3_BUCKET}")
+print(f"AWS_REGION: {AWS_REGION}")
+print(f"AWS_ACCESS_KEY_ID: {AWS_ACCESS_KEY_ID}")
+print(f"AWS_SECRET_ACCESS_KEY: {AWS_SECRET_ACCESS_KEY}")
+
+# Ensure none of the environment variables are None
+if None in (S3_BUCKET, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY):
+    st.error("One or more environment variables are not set. Please check the configuration in Streamlit Cloud.")
+    st.stop()
 
 # Initialize the S3 client
 S3_CLIENT = boto3.client(
     's3',
     region_name=AWS_REGION,
-    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
 )
 
 def upload_file_to_s3(file, bucket, key):
