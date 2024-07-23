@@ -29,7 +29,7 @@ def invoke_lambda(fundline_key, excel_key):
     try:
         lambda_client = boto3.client('lambda')
         response = lambda_client.invoke(
-            FunctionName='YourLambdaFunctionName',
+            FunctionName='bestandsprovision',
             InvocationType='RequestResponse',
             Payload=json.dumps({
                 "bucket": S3_BUCKET,
