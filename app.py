@@ -55,19 +55,9 @@ if st.button('Process Files'):
             fundline_key = f"fundline_excel/{fundline_file.name}"
             excel_key = f"excel_excel/{excel_file.name}"
 
-            # Ensure files are correctly read as bytes
-            fundline_bytes = fundline_file.read()
-            excel_bytes = excel_file.read()
-
-            # Check if the files are correctly loaded
-            if fundline_bytes is None:
-                raise ValueError("Fundline file bytes are None")
-            if excel_bytes is None:
-                raise ValueError("Excel file bytes are None")
-
-            # Upload files to S3
-            upload_file_to_s3(fundline_bytes, S3_BUCKET, fundline_key)
-            upload_file_to_s3(excel_bytes, S3_BUCKET, excel_key)
+            # Upload files to S3 directly using the file-like object
+            upload_file_to_s3(fundline_file, S3_BUCKET, fundline_key)
+            upload_file_to_s3(excel_file, S3_BUCKET, excel_key)
 
             # Invoke Lambda function
             result = invoke_lambda(fundline_key, excel_key)
