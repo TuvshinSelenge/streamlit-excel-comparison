@@ -1,10 +1,19 @@
 import streamlit as st
 import boto3
 import json
+import os
 
-# AWS S3 configuration
-S3_BUCKET = 'myexcelfund'
-S3_CLIENT = boto3.client('s3')
+# Retrieve AWS credentials and S3 bucket name from environment variables
+S3_BUCKET = os.getenv('S3_BUCKET')
+AWS_REGION = os.getenv('AWS_DEFAULT_REGION')
+
+# Initialize the S3 client
+S3_CLIENT = boto3.client(
+    's3',
+    region_name=AWS_REGION,
+    aws_access_key_id=os.getenv('AKIAQEFWAXCCQ3G46WP4'),
+    aws_secret_access_key=os.getenv('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')
+)
 
 def upload_file_to_s3(file, bucket, key):
     S3_CLIENT.upload_fileobj(file, bucket, key)
@@ -12,7 +21,7 @@ def upload_file_to_s3(file, bucket, key):
 def invoke_lambda(fundline_key, excel_key):
     lambda_client = boto3.client('lambda')
     response = lambda_client.invoke(
-        FunctionName='YourLambdaFunctionName',
+        FunctionName='bestandsprovision',
         InvocationType='RequestResponse',
         Payload=json.dumps({
             "bucket": S3_BUCKET,
