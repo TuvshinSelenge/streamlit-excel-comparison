@@ -52,7 +52,9 @@ def invoke_lambda(fundline_key, excel_key):
                 "excel_key": excel_key
             })
         )
-        return json.loads(response['Payload'].read())
+        response_payload = response['Payload'].read()
+        print(f"Lambda response payload: {response_payload}")
+        return json.loads(response_payload)
     except Exception as e:
         print(f"Error invoking Lambda function: {e}")
         raise
@@ -74,11 +76,12 @@ if st.button('Process Files'):
 
             # Invoke Lambda function
             result = invoke_lambda(fundline_key, excel_key)
+            print(f"Lambda result: {result}")
 
-            if result['statusCode'] == 200:
+            if 'statusCode' in result and result['statusCode'] == 200:
                 st.success('Files processed successfully! Check the output folder in your S3 bucket for the results.')
             else:
-                st.error('Error processing files!')
+                st.error(f"Error processing files! Lambda returned: {result}")
         except Exception as e:
             st.error(f"An error occurred: {e}")
     else:
