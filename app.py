@@ -11,14 +11,16 @@ AWS_REGION = os.getenv('AWS_DEFAULT_REGION')
 S3_CLIENT = boto3.client(
     's3',
     region_name=AWS_REGION,
-    aws_access_key_id=os.getenv('AKIAQEFWAXCCQ3G46WP4'),
-    aws_secret_access_key=os.getenv('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')
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
 )
 
 def upload_file_to_s3(file, bucket, key):
     try:
         # Print debugging information
         print(f"Uploading file to bucket: {bucket}, key: {key}")
+        if file is None:
+            raise ValueError("The file object is None")
         S3_CLIENT.upload_fileobj(file, bucket, key)
         print("Upload successful")
     except Exception as e:
@@ -53,9 +55,21 @@ if st.button('Process Files'):
             fundline_key = f"fundline_excel/{fundline_file.name}"
             excel_key = f"excel_excel/{excel_file.name}"
 
-            upload_file_to_s3(fundline_file, S3_BUCKET, fundline_key)
-            upload_file_to_s3(excel_file, S3_BUCKET, excel_key)
+            # Ensure files are correctly read as bytes
+            fundline_bytes = fundline_file.read()
+            excel_bytes = excel_file.read()
 
+            # Check if the files are correctly loaded
+            if fundline_bytes is None:
+                raise ValueError("Fundline file bytes are None")
+            if excel_bytes is None:
+                raise ValueError("Excel file bytes are None")
+
+            # Upload files to S3
+            upload_file_to_s3(fundline_bytes, S3_BUCKET, fundline_key)
+            upload_file_to_s3(excel_bytes, S3_BUCKET, excel_key)
+
+            # Invoke Lambda function
             result = invoke_lambda(fundline_key, excel_key)
 
             if result['statusCode'] == 200:
