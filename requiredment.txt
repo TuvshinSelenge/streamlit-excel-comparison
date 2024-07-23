@@ -1,0 +1,6 @@
+streamlit
+boto3
+pandas
+openpyxl
+fuzzywuzzy
+python-Levenshtein
