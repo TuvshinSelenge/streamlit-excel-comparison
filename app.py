@@ -44,9 +44,13 @@ def read_files(files):
                     df.columns = all_sheets_df.columns  # Set same columns as the first sheet
                 all_sheets_df = pd.concat([all_sheets_df, df], ignore_index=True)
             files_data[file_name] = all_sheets_df
+            # Debugging
+            print(f"{file_name} Dataframe:")
+            print(all_sheets_df.head())
         except Exception as e:
             logger.error(f"Error reading {file_name}: {e}")
     return files_data
+
 
 def date_converter(df):
     if "Statement Month" in df.columns and "Statement Year" in df.columns:
@@ -88,6 +92,9 @@ def compare_data(fundline_data, excel_data):
     excel_files = excel_data.keys()
     matched_files = match_files(fundline_files, excel_files)
 
+    print("Matched Files:")
+    print(matched_files)
+
     for fundline_file, excel_file in matched_files:
         fundline_df = fundline_data[fundline_file]
         excel_df = excel_data[excel_file]
@@ -108,6 +115,9 @@ def compare_data(fundline_data, excel_data):
             how='inner', 
             suffixes=('_Fundline', '_Excel')
         )
+
+        print(f"Comparison DataFrame for {fundline_file} and {excel_file}:")
+        print(comparison_df.head())
 
         fundline_column = 'Erwartete Prov. Whg_Fundline' if 'Erwartete Prov. Whg_Fundline' in comparison_df.columns else 'Erwartete Prov. Whg'
         excel_column = 'Provision_Excel' if 'Provision_Excel' in comparison_df.columns else 'Provision'
@@ -134,7 +144,11 @@ def compare_data(fundline_data, excel_data):
             comparison_df[['Isin Code', 'Date', fundline_column, excel_column, 'Difference']].to_excel(writer, sheet_name='Einzeln', index=False)
         output.seek(0)
         comparison_files[comparison_file_name] = output.read()
+
+        print(f"Generated file: {comparison_file_name}")
+
     return comparison_files
+
 
 def match_files(fundline_files, excel_files):
     matched_files = []
