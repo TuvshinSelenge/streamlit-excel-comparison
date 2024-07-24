@@ -11,6 +11,22 @@ import logging
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
 
+# Define the column name mappings for Excel sheets
+column_mappings = {
+    'Isin Code': [
+        'ISIN', 'Isin', 'Share ISIN Reference', 'FINANZINSTRUMENT_IDENT', 'Text23'
+    ],
+    'Provision': [
+        'Comm. Amount', 'Provision', 'Betrag (€)', 'Vergütung', 'EURMonat',
+        'Client Trailer Fees Amount In Consolidated Currency', 'Amount In Agreement Ccy', 'Bepro',
+        'Provisionsbetrag in Währung', 'Fee', 'BPROV', 'BpkEUR', 'Kommissionsbetrag', 'Commission Due Payment CCY', 'Fee (Payment Currency)', 'Amount In Partner Currency',
+        'Betrag (EUR)'
+    ],
+    'Date': [
+        'Date', 'Datum', 'Booking Date', 'End-Datum', 'Period End Date', 'Holding as of', 'STICHTAG', 'Period', 'Datum_str', 'Positionsdatum', 'Stichtag', 'Retrocession Date'
+    ]
+}
+
 def read_files_from_upload(uploaded_files):
     """Read all uploaded files and return a dictionary of DataFrames."""
     files_data = {}
@@ -157,17 +173,20 @@ def compare_data(fundline_data, excel_data, column_mappings):
             # Save each comparison result to a file
             if not comparison_df.empty:
                 output = io.BytesIO()
+
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     quartal_aggregated_df.to_excel(writer, sheet_name='Quartal', index=False)
                     comparison_df[['Isin Code', 'Date', fundline_column, excel_column, 'Difference']].to_excel(writer, sheet_name='Einzeln', index=False)
-                output.seek(0)
 
                 # Apply conditional formatting
                 apply_conditional_formatting(output, sheet_name='Quartal', column='D', lower_threshold=-20, upper_threshold=20)
                 apply_conditional_formatting(output, sheet_name='Einzeln', column='E', lower_threshold=-20, upper_threshold=20)
 
-                comparison_file_name = f"{os.path.splitext(fundline_file)[0]}_{os.path.splitext(excel_file)[0]}_comparison.xlsx"
-                comparison_files.append((comparison_file_name, output))
+                output.seek(0)
+                comparison_files.append((f"{os.path.splitext(fundline_file)[0]}_{os.path.splitext(excel_file)[0]}_comparison.xlsx", output))
+                logging.info(f"Saved comparison results to in-memory file for {fundline_file} and {excel_file}")
+        else:
+            logging.info(f"Required columns not found in {fundline_file} or {excel_file}")
 
     return comparison_files
 
