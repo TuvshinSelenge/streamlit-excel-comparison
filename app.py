@@ -5,15 +5,17 @@ import os
 
 # Retrieve AWS credentials and S3 bucket name from environment variables
 S3_BUCKET = os.getenv('S3_BUCKET')
+OUTPUT_BUCKET = "myexcelfund-output"
 AWS_REGION = os.getenv('AWS_DEFAULT_REGION')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
 # Debugging: Print environment variable values to ensure they are set
-st.write(f"S3_BUCKET: {S3_BUCKET}")
-st.write(f"AWS_REGION: {AWS_REGION}")
-st.write(f"AWS_ACCESS_KEY_ID: {AWS_ACCESS_KEY_ID}")
-st.write(f"AWS_SECRET_ACCESS_KEY: {AWS_SECRET_ACCESS_KEY}")
+print(f"S3_BUCKET: {S3_BUCKET}")
+print(f"OUTPUT_BUCKET: {OUTPUT_BUCKET}")
+print(f"AWS_REGION: {AWS_REGION}")
+print(f"AWS_ACCESS_KEY_ID: {AWS_ACCESS_KEY_ID}")
+print(f"AWS_SECRET_ACCESS_KEY: {AWS_SECRET_ACCESS_KEY}")
 
 # Ensure none of the environment variables are None
 if None in (S3_BUCKET, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY):
@@ -69,6 +71,17 @@ def download_file_from_s3(bucket, key):
         print(f"Error downloading file from S3: {e}")
         return None
 
+def list_s3_objects(bucket, prefix):
+    try:
+        response = S3_CLIENT.list_objects_v2(Bucket=bucket, Prefix=prefix)
+        if 'Contents' in response:
+            return [obj['Key'] for obj in response['Contents']]
+        else:
+            return []
+    except Exception as e:
+        print(f"Error listing objects in S3: {e}")
+        return []
+
 st.title("Excel Comparison Tool")
 
 fundline_file = st.file_uploader("Upload Fundline File", type=['xlsx'])
@@ -90,10 +103,14 @@ if st.button('Process Files'):
 
             if 'statusCode' in result and result['statusCode'] == 200:
                 st.success('Files processed successfully! Check the output folder in your S3 bucket for the results.')
+                
+                # List objects in the output bucket
+                output_files = list_s3_objects(OUTPUT_BUCKET, "output/")
+                st.write(f"Files in output bucket: {output_files}")
 
                 # Download the comparison file
                 comparison_key = f"output/{os.path.splitext(fundline_file.name)[0]}_{os.path.splitext(excel_file.name)[0]}_comparison.xlsx"
-                comparison_file = download_file_from_s3(S3_BUCKET, comparison_key)
+                comparison_file = download_file_from_s3(OUTPUT_BUCKET, comparison_key)
 
                 if comparison_file:
                     st.download_button(
