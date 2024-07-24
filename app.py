@@ -125,10 +125,10 @@ def compare_data(fundline_data, excel_data, column_mappings):
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 quartal_aggregated_df.to_excel(writer, sheet_name='Quartal', index=False)
                 comparison_df[['Isin Code', 'Date', fundline_column, excel_column, 'Difference']].to_excel(writer, sheet_name='Einzeln', index=False)
-            
-            # Apply conditional formatting
-            apply_conditional_formatting(output, sheet_name='Quartal', column='D', lower_threshold=-20, upper_threshold=20)
-            apply_conditional_formatting(output, sheet_name='Einzeln', column='E', lower_threshold=-20, upper_threshold=20)
+                
+                # Apply conditional formatting
+                apply_conditional_formatting(output, sheet_name='Quartal', column='D', lower_threshold=-20, upper_threshold=20)
+                apply_conditional_formatting(output, sheet_name='Einzeln', column='E', lower_threshold=-20, upper_threshold=20)
 
             # Save the BytesIO object to a file
             output.seek(0)
