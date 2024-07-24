@@ -4,7 +4,6 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from openpyxl.formatting.rule import CellIsRule
 from io import BytesIO
-import os
 import logging
 from fuzzywuzzy import fuzz, process
 
@@ -131,56 +130,66 @@ def compare_data(fundline_data, excel_data):
         fundline_df = convert_date_column(fundline_df, 'Date')
         excel_df = convert_date_column(excel_df, 'Date')
 
-        fundline_df  = fundline_df.groupby(['Isin Code', 'Date'])['Erwartete Prov. Whg'].sum().reset_index()
-        excel_df  = excel_df.groupby(['Isin Code', 'Date'])['Provision'].sum().reset_index()
-
         logging.info(f"\nColumns in {fundline_file} after renaming: {fundline_df.columns}")
         logging.info(f"Columns in {excel_file} after renaming: {excel_df.columns}")
 
-        if 'Isin Code' in fundline_df.columns and 'Date' in fundline_df.columns and 'Isin Code' in excel_df.columns and 'Date' in excel_df.columns:
-            comparison_df = pd.merge(
-                fundline_df, excel_df,
-                left_on=['Isin Code', 'Date'],
-                right_on=['Isin Code', 'Date'],
-                how='inner',
-                suffixes=('_Fundline', '_Excel')
-            )
+        if 'Isin Code' in fundline_df.columns and 'Date' in fundline_df.columns:
+            fundline_df = fundline_df.groupby(['Isin Code', 'Date'])['Provision'].sum().reset_index()
+            logging.info(f"Fundline DataFrame grouped: {fundline_df.head()}")
+        else:
+            logging.error(f"Missing 'Isin Code' or 'Date' columns in fundline data from {fundline_file}")
+            continue
 
-            fundline_column = 'Erwartete Prov. Whg_Fundline' if 'Erwartete Prov. Whg_Fundline' in comparison_df.columns else 'Erwartete Prov. Whg'
-            excel_column = 'Provision_Excel' if 'Provision_Excel' in comparison_df.columns else 'Provision'
+        if 'Isin Code' in excel_df.columns and 'Date' in excel_df.columns:
+            excel_df = excel_df.groupby(['Isin Code', 'Date'])['Provision'].sum().reset_index()
+            logging.info(f"Excel DataFrame grouped: {excel_df.head()}")
+        else:
+            logging.error(f"Missing 'Isin Code' or 'Date' columns in excel data from {excel_file}")
+            continue
 
-            comparison_df[fundline_column] = comparison_df[fundline_column].astype(float)
-            comparison_df[excel_column] = comparison_df[excel_column].astype(float)
+        comparison_df = pd.merge(
+            fundline_df, excel_df,
+            left_on=['Isin Code', 'Date'],
+            right_on=['Isin Code', 'Date'],
+            how='inner',
+            suffixes=('_Fundline', '_Excel')
+        )
 
-            comparison_df['Difference'] = comparison_df[excel_column] - comparison_df[fundline_column]
+        fundline_column = 'Provision_Fundline' if 'Provision_Fundline' in comparison_df.columns else 'Provision'
+        excel_column = 'Provision_Excel' if 'Provision_Excel' in comparison_df.columns else 'Provision'
 
-            fundline_quartal_agg = fundline_df.groupby('Isin Code')['Erwartete Prov. Whg'].sum().reset_index()
-            excel_quartal_agg = excel_df.groupby('Isin Code')['Provision'].sum().reset_index()
-            quartal_aggregated_df = pd.merge(
-                fundline_quartal_agg, excel_quartal_agg,
-                on='Isin Code',
-                how='inner',
-                suffixes=('_Fundline', '_Excel')
-            )
-            quartal_aggregated_df['Difference'] = quartal_aggregated_df['Provision'] - quartal_aggregated_df['Erwartete Prov. Whg']
+        comparison_df[fundline_column] = comparison_df[fundline_column].astype(float)
+        comparison_df[excel_column] = comparison_df[excel_column].astype(float)
 
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                quartal_aggregated_df.to_excel(writer, sheet_name='Quartal', index=False)
-                comparison_df[['Isin Code', 'Date', fundline_column, excel_column, 'Difference']].to_excel(writer, sheet_name='Einzeln', index=False)
+        comparison_df['Difference'] = comparison_df[excel_column] - comparison_df[fundline_column]
 
-            apply_conditional_formatting(output, sheet_name='Quartal', column='F', lower_threshold=-20, upper_threshold=20)
-            apply_conditional_formatting(output, sheet_name='Einzeln', column='E', lower_threshold=-20, upper_threshold=20)
+        fundline_quartal_agg = fundline_df.groupby('Isin Code')['Provision'].sum().reset_index()
+        excel_quartal_agg = excel_df.groupby('Isin Code')['Provision'].sum().reset_index()
+        quartal_aggregated_df = pd.merge(
+            fundline_quartal_agg, excel_quartal_agg,
+            on='Isin Code',
+            how='inner',
+            suffixes=('_Fundline', '_Excel')
+        )
+        quartal_aggregated_df['Difference'] = quartal_aggregated_df['Provision_Excel'] - quartal_aggregated_df['Provision_Fundline']
 
-            comparison_files.append(output)
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            quartal_aggregated_df.to_excel(writer, sheet_name='Quartal', index=False)
+            comparison_df[['Isin Code', 'Date', fundline_column, excel_column, 'Difference']].to_excel(writer, sheet_name='Einzeln', index=False)
+
+        apply_conditional_formatting(output, sheet_name='Quartal', column='F', lower_threshold=-20, upper_threshold=20)
+        apply_conditional_formatting(output, sheet_name='Einzeln', column='E', lower_threshold=-20, upper_threshold=20)
+
+        comparison_files.append(output)
 
     return comparison_files
 
-# Streamlit app
-st.title('Excel Comparison Tool')
+# Streamlit UI
+st.title("Fundline vs Excel Comparison")
 
-uploaded_fundline_files = st.file_uploader("Upload Fundline files", type="xlsx", accept_multiple_files=True)
-uploaded_excel_files = st.file_uploader("Upload Excel files", type="xlsx", accept_multiple_files=True)
+uploaded_fundline_files = st.file_uploader("Upload Fundline Files", type=["xlsx"], accept_multiple_files=True)
+uploaded_excel_files = st.file_uploader("Upload Excel Files", type=["xlsx"], accept_multiple_files=True)
 
 if uploaded_fundline_files and uploaded_excel_files:
     fundline_data = {file.name: pd.read_excel(file, engine='openpyxl') for file in uploaded_fundline_files}
