@@ -42,12 +42,7 @@ def upload_file_to_s3(file, bucket, key):
 
 def invoke_lambda(fundline_key, excel_key):
     try:
-        lambda_client = boto3.client(
-            'lambda',
-            region_name=AWS_REGION,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-        )
+        lambda_client = boto3.client('lambda')
         response = lambda_client.invoke(
             FunctionName='bestandsprovision2',
             InvocationType='RequestResponse',
@@ -64,6 +59,14 @@ def invoke_lambda(fundline_key, excel_key):
         print(f"Error invoking Lambda function: {e}")
         raise
 
+def download_file_from_s3(bucket, key):
+    try:
+        file_obj = S3_CLIENT.get_object(Bucket=bucket, Key=key)
+        return file_obj['Body'].read()
+    except Exception as e:
+        print(f"Error downloading file from S3: {e}")
+        return None
+
 st.title("Excel Comparison Tool")
 
 fundline_file = st.file_uploader("Upload Fundline File", type=['xlsx'])
@@ -79,18 +82,26 @@ if st.button('Process Files'):
             upload_file_to_s3(fundline_file, S3_BUCKET, fundline_key)
             upload_file_to_s3(excel_file, S3_BUCKET, excel_key)
 
-            # Verify files were uploaded by listing objects in the S3 bucket
-            s3_objects = S3_CLIENT.list_objects_v2(Bucket=S3_BUCKET, Prefix='fundline_excel/')
-            print(f"S3 objects with prefix 'fundline_excel/': {s3_objects}")
-            s3_objects = S3_CLIENT.list_objects_v2(Bucket=S3_BUCKET, Prefix='excel_excel/')
-            print(f"S3 objects with prefix 'excel_excel/': {s3_objects}")
-
             # Invoke Lambda function
             result = invoke_lambda(fundline_key, excel_key)
             print(f"Lambda result: {result}")
 
             if 'statusCode' in result and result['statusCode'] == 200:
                 st.success('Files processed successfully! Check the output folder in your S3 bucket for the results.')
+                
+                # Download the comparison file
+                comparison_key = f"output/{os.path.splitext(fundline_file.name)[0]}_{os.path.splitext(excel_file.name)[0]}_comparison.xlsx"
+                comparison_file = download_file_from_s3(S3_BUCKET, comparison_key)
+
+                if comparison_file:
+                    st.download_button(
+                        label="Download comparison file",
+                        data=comparison_file,
+                        file_name=f"{os.path.splitext(fundline_file.name)[0]}_{os.path.splitext(excel_file.name)[0]}_comparison.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                else:
+                    st.error('Failed to download the comparison file from S3.')
             else:
                 st.error(f"Error processing files! Lambda returned: {result}")
         except Exception as e:
