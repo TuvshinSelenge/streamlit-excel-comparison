@@ -4,6 +4,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from openpyxl.formatting.rule import CellIsRule
 from io import BytesIO
+import os
 import logging
 from fuzzywuzzy import fuzz, process
 
@@ -76,11 +77,14 @@ def aggregate_data(data, value_column):
 
 def match_files(fundline_files, excel_files):
     matched_files = []
+    fundline_base_names = [os.path.splitext(f.name)[0].lower() for f in fundline_files]
+    excel_base_names = [os.path.splitext(f.name)[0].lower() for f in excel_files]
+
     for fundline_file in fundline_files:
-        fundline_base = os.path.splitext(fundline_file)[0].lower()
-        best_match, score = process.extractOne(fundline_base, [os.path.splitext(f)[0].lower() for f in excel_files], scorer=fuzz.partial_ratio)
+        fundline_base = os.path.splitext(fundline_file.name)[0].lower()
+        best_match, score = process.extractOne(fundline_base, excel_base_names, scorer=fuzz.partial_ratio)
         if score > 80:  # Adjust this threshold based on your needs
-            excel_file = next(f for f in excel_files if os.path.splitext(f)[0].lower() == best_match)
+            excel_file = next(f for f in excel_files if os.path.splitext(f.name)[0].lower() == best_match)
             matched_files.append((fundline_file, excel_file))
     logging.info("Matched files: %s", matched_files)
     return matched_files
@@ -116,13 +120,13 @@ def apply_conditional_formatting(output, sheet_name='Sheet2', column='A', lower_
 
 def compare_data(fundline_data, excel_data):
     comparison_files = []
-    fundline_files = fundline_data.keys()
-    excel_files = excel_data.keys()
+    fundline_files = list(fundline_data.keys())
+    excel_files = list(excel_data.keys())
     matched_files = match_files(fundline_files, excel_files)
 
     for fundline_file, excel_file in matched_files:
-        fundline_df = fundline_data[fundline_file]
-        excel_df = excel_data[excel_file]
+        fundline_df = fundline_data[fundline_file.name]
+        excel_df = excel_data[excel_file.name]
 
         fundline_df = rename_columns(fundline_df, column_mappings)
         excel_df = rename_columns(excel_df, column_mappings)
@@ -130,21 +134,21 @@ def compare_data(fundline_data, excel_data):
         fundline_df = convert_date_column(fundline_df, 'Date')
         excel_df = convert_date_column(excel_df, 'Date')
 
-        logging.info(f"\nColumns in {fundline_file} after renaming: {fundline_df.columns}")
-        logging.info(f"Columns in {excel_file} after renaming: {excel_df.columns}")
+        logging.info(f"\nColumns in {fundline_file.name} after renaming: {fundline_df.columns}")
+        logging.info(f"Columns in {excel_file.name} after renaming: {excel_df.columns}")
 
         if 'Isin Code' in fundline_df.columns and 'Date' in fundline_df.columns:
             fundline_df = fundline_df.groupby(['Isin Code', 'Date'])['Provision'].sum().reset_index()
             logging.info(f"Fundline DataFrame grouped: {fundline_df.head()}")
         else:
-            logging.error(f"Missing 'Isin Code' or 'Date' columns in fundline data from {fundline_file}")
+            logging.error(f"Missing 'Isin Code' or 'Date' columns in fundline data from {fundline_file.name}")
             continue
 
         if 'Isin Code' in excel_df.columns and 'Date' in excel_df.columns:
             excel_df = excel_df.groupby(['Isin Code', 'Date'])['Provision'].sum().reset_index()
             logging.info(f"Excel DataFrame grouped: {excel_df.head()}")
         else:
-            logging.error(f"Missing 'Isin Code' or 'Date' columns in excel data from {excel_file}")
+            logging.error(f"Missing 'Isin Code' or 'Date' columns in excel data from {excel_file.name}")
             continue
 
         comparison_df = pd.merge(
@@ -178,8 +182,7 @@ def compare_data(fundline_data, excel_data):
             quartal_aggregated_df.to_excel(writer, sheet_name='Quartal', index=False)
             comparison_df[['Isin Code', 'Date', fundline_column, excel_column, 'Difference']].to_excel(writer, sheet_name='Einzeln', index=False)
 
-        apply_conditional_formatting(output, sheet_name='Quartal', column='F', lower_threshold=-20, upper_threshold=20)
-        apply_conditional_formatting(output, sheet_name='Einzeln', column='E', lower_threshold=-20, upper_threshold=20)
+        apply_conditional_formatting(output, sheet_name='Quartal', column='D', lower_threshold=-20, upper_threshold=20)
 
         comparison_files.append(output)
 
