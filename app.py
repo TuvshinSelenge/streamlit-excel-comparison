@@ -11,7 +11,7 @@ import logging
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
 
-# Define the column name mappings for Excel sheets
+# Define column name mappings
 column_mappings = {
     'Isin Code': [
         'ISIN', 'Isin', 'Share ISIN Reference', 'FINANZINSTRUMENT_IDENT', 'Text23'
@@ -32,7 +32,6 @@ def read_files_from_upload(uploaded_files):
     files_data = {}
     for uploaded_file in uploaded_files:
         try:
-            # Load the file into a DataFrame
             excel_file = pd.ExcelFile(uploaded_file)
             all_sheets_df = pd.DataFrame()
             header_set = False
@@ -43,7 +42,7 @@ def read_files_from_upload(uploaded_files):
                     df = set_correct_headers(df, column_mappings)
                     header_set = True
                 else:
-                    df.columns = all_sheets_df.columns  # Set same columns as the first sheet
+                    df.columns = all_sheets_df.columns
                 all_sheets_df = pd.concat([all_sheets_df, df], ignore_index=True)
                 logging.info(f"Read {uploaded_file.name} - {sheet_name} successfully with shape {df.shape}")
             files_data[uploaded_file.name] = all_sheets_df
@@ -232,7 +231,7 @@ if st.sidebar.button('Run Comparison'):
 
         # Show results
         if comparison_files:
-            st.write(f"Comparison results:")
+            st.write("Comparison results:")
             for file_name, file_data in comparison_files:
                 st.download_button(label=f"Download {file_name}", data=file_data, file_name=file_name)
         else:
