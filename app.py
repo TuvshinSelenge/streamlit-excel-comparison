@@ -74,6 +74,12 @@ if st.button('Process Files'):
             upload_file_to_s3(fundline_file, S3_BUCKET, fundline_key)
             upload_file_to_s3(excel_file, S3_BUCKET, excel_key)
 
+            # Verify files were uploaded by listing objects in the S3 bucket
+            s3_objects = S3_CLIENT.list_objects_v2(Bucket=S3_BUCKET, Prefix='fundline_excel/')
+            print(f"S3 objects with prefix 'fundline_excel/': {s3_objects}")
+            s3_objects = S3_CLIENT.list_objects_v2(Bucket=S3_BUCKET, Prefix='excel_excel/')
+            print(f"S3 objects with prefix 'excel_excel/': {s3_objects}")
+
             # Invoke Lambda function
             result = invoke_lambda(fundline_key, excel_key)
             print(f"Lambda result: {result}")
