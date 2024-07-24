@@ -1,33 +1,27 @@
 import streamlit as st
 import pandas as pd
 from openpyxl import load_workbook
-from openpyxl.styles import PatternFill
 from fuzzywuzzy import fuzz, process
-import json
 import io
 import os
 
-# Logging setup
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
+# Define your column mappings
+column_mappings = {
+    'Isin Code': [
+        'ISIN', 'Isin', 'Share ISIN Reference', 'FINANZINSTRUMENT_IDENT', 'Text23'
+    ],
+    'Provision': [
+        'Comm. Amount', 'Provision', 'Betrag (€)', 'Vergütung', 'EURMonat',
+        'Client Trailer Fees Amount In Consolidated Currency', 'Amount In Agreement Ccy', 'Bepro',
+        'Provisionsbetrag in Währung', 'Fee', 'BPROV', 'BpkEUR', 'Kommissionsbetrag', 'Commission Due Payment CCY', 'Fee (Payment Currency)', 'Amount In Partner Currency',
+        'Betrag (EUR)'
+    ],
+    'Date': [
+        'Date', 'Datum', 'Booking Date', 'End-Datum', 'Period End Date', 'Holding as of', 'STICHTAG', 'Period', 'Datum_str', 'Positionsdatum', 'Stichtag', 'Retrocession Date'
+    ]
+}
 
 def read_files(files):
-    column_mappings = {
-        'Isin Code': [
-            'ISIN', 'Isin', 'Share ISIN Reference', 'FINANZINSTRUMENT_IDENT', 'Text23'
-        ],
-        'Provision': [
-            'Comm. Amount', 'Provision', 'Betrag (€)', 'Vergütung', 'EURMonat',
-            'Client Trailer Fees Amount In Consolidated Currency', 'Amount In Agreement Ccy', 'Bepro',
-            'Provisionsbetrag in Währung', 'Fee', 'BPROV', 'BpkEUR', 'Kommissionsbetrag', 'Commission Due Payment CCY', 'Fee (Payment Currency)', 'Amount In Partner Currency',
-            'Betrag (EUR)'
-        ],
-        'Date': [
-            'Date', 'Datum', 'Booking Date', 'End-Datum', 'Period End Date', 'Holding as of', 'STICHTAG', 'Period', 'Datum_str', 'Positionsdatum', 'Stichtag', 'Retrocession Date'
-        ]
-    }
-
     files_data = {}
     for file_name, file_content in files.items():
         try:
@@ -44,13 +38,9 @@ def read_files(files):
                     df.columns = all_sheets_df.columns  # Set same columns as the first sheet
                 all_sheets_df = pd.concat([all_sheets_df, df], ignore_index=True)
             files_data[file_name] = all_sheets_df
-            # Debugging
-            print(f"{file_name} Dataframe:")
-            print(all_sheets_df.head())
         except Exception as e:
-            logger.error(f"Error reading {file_name}: {e}")
+            st.error(f"Error reading {file_name}: {e}")
     return files_data
-
 
 def date_converter(df):
     if "Statement Month" in df.columns and "Statement Year" in df.columns:
@@ -74,12 +64,6 @@ def rename_columns(df, column_mappings):
     df.rename(columns=rename_dict, inplace=True)
     return df
 
-def filter_valid_rows(df):
-    if 'Isin Code' in df.columns and 'Date' in df.columns:
-        df = df.dropna(subset=['Isin Code', 'Date'])
-        df = df[df['Isin Code'].apply(lambda x: isinstance(x, str) and x.strip() != "")]
-    return df
-
 def convert_date_column(df, date_column_name):
     if date_column_name in df.columns:
         df[date_column_name] = pd.to_datetime(df[date_column_name], errors='coerce', format='%d.%m.%Y')
@@ -91,9 +75,6 @@ def compare_data(fundline_data, excel_data):
     fundline_files = fundline_data.keys()
     excel_files = excel_data.keys()
     matched_files = match_files(fundline_files, excel_files)
-
-    print("Matched Files:")
-    print(matched_files)
 
     for fundline_file, excel_file in matched_files:
         fundline_df = fundline_data[fundline_file]
@@ -115,9 +96,6 @@ def compare_data(fundline_data, excel_data):
             how='inner', 
             suffixes=('_Fundline', '_Excel')
         )
-
-        print(f"Comparison DataFrame for {fundline_file} and {excel_file}:")
-        print(comparison_df.head())
 
         fundline_column = 'Erwartete Prov. Whg_Fundline' if 'Erwartete Prov. Whg_Fundline' in comparison_df.columns else 'Erwartete Prov. Whg'
         excel_column = 'Provision_Excel' if 'Provision_Excel' in comparison_df.columns else 'Provision'
@@ -145,10 +123,7 @@ def compare_data(fundline_data, excel_data):
         output.seek(0)
         comparison_files[comparison_file_name] = output.read()
 
-        print(f"Generated file: {comparison_file_name}")
-
     return comparison_files
-
 
 def match_files(fundline_files, excel_files):
     matched_files = []
@@ -169,25 +144,39 @@ excel_file = st.file_uploader("Upload Excel File", type=['xlsx'])
 if st.button('Process Files'):
     if fundline_file and excel_file:
         try:
-            # Process files directly in Streamlit
-            fundline_file_content = fundline_file.read()
-            excel_file_content = excel_file.read()
+            fundline_key = f"fundline_excel/{fundline_file.name}"
+            excel_key = f"excel_excel/{excel_file.name}"
 
-            fundline_data = read_files({'fundline.xlsx': fundline_file_content})
-            excel_data = read_files({'excel.xlsx': excel_file_content})
+            # Upload files to S3 directly using the file-like object
+            upload_file_to_s3(fundline_file, S3_BUCKET, fundline_key)
+            upload_file_to_s3(excel_file, S3_BUCKET, excel_key)
 
-            comparison_files = compare_data(fundline_data, excel_data)
-            
-            if comparison_files:
-                for file_name, file_data in comparison_files.items():
+            # Invoke Lambda function
+            result = invoke_lambda(fundline_key, excel_key)
+            print(f"Lambda result: {result}")
+
+            if 'statusCode' in result and result['statusCode'] == 200:
+                st.success('Files processed successfully! Check the output folder in your S3 bucket for the results.')
+                
+                # List objects in the output bucket
+                output_files = list_s3_objects(OUTPUT_BUCKET, "output/")
+                st.write(f"Files in output bucket: {output_files}")
+
+                # Download the comparison file
+                comparison_key = f"output/{os.path.splitext(fundline_file.name)[0]}_{os.path.splitext(excel_file.name)[0]}_comparison.xlsx"
+                comparison_file = download_file_from_s3(OUTPUT_BUCKET, comparison_key)
+
+                if comparison_file:
                     st.download_button(
-                        label=f"Download {file_name}",
-                        data=file_data,
-                        file_name=file_name,
+                        label="Download comparison file",
+                        data=comparison_file,
+                        file_name=f"{os.path.splitext(fundline_file.name)[0]}_{os.path.splitext(excel_file.name)[0]}_comparison.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
+                else:
+                    st.error('Failed to download the comparison file from S3.')
             else:
-                st.error('No comparison files were generated.')
+                st.error(f"Error processing files! Lambda returned: {result}")
         except Exception as e:
             st.error(f"An error occurred: {e}")
     else:
