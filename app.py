@@ -10,10 +10,10 @@ AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
 # Debugging: Print environment variable values to ensure they are set
-print(f"S3_BUCKET: {S3_BUCKET}")
-print(f"AWS_REGION: {AWS_REGION}")
-print(f"AWS_ACCESS_KEY_ID: {AWS_ACCESS_KEY_ID}")
-print(f"AWS_SECRET_ACCESS_KEY: {AWS_SECRET_ACCESS_KEY}")
+st.write(f"S3_BUCKET: {S3_BUCKET}")
+st.write(f"AWS_REGION: {AWS_REGION}")
+st.write(f"AWS_ACCESS_KEY_ID: {AWS_ACCESS_KEY_ID}")
+st.write(f"AWS_SECRET_ACCESS_KEY: {AWS_SECRET_ACCESS_KEY}")
 
 # Ensure none of the environment variables are None
 if None in (S3_BUCKET, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY):
@@ -42,7 +42,9 @@ def upload_file_to_s3(file, bucket, key):
 
 def invoke_lambda(fundline_key, excel_key):
     try:
-        lambda_client = boto3.client('lambda')
+        lambda_client = boto3.client('lambda', region_name=AWS_REGION,
+                                     aws_access_key_id=AWS_ACCESS_KEY_ID,
+                                     aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
         response = lambda_client.invoke(
             FunctionName='bestandsprovision2',
             InvocationType='RequestResponse',
@@ -88,7 +90,7 @@ if st.button('Process Files'):
 
             if 'statusCode' in result and result['statusCode'] == 200:
                 st.success('Files processed successfully! Check the output folder in your S3 bucket for the results.')
-                
+
                 # Download the comparison file
                 comparison_key = f"output/{os.path.splitext(fundline_file.name)[0]}_{os.path.splitext(excel_file.name)[0]}_comparison.xlsx"
                 comparison_file = download_file_from_s3(S3_BUCKET, comparison_key)
