@@ -211,7 +211,8 @@ def apply_conditional_formatting(output, sheet_name='Sheet2', column='Difference
     wb.save(output)
 
 # Streamlit UI
-st.title("Data Comparison Tool")
+st.set_page_config(page_title="Data Comparison Tool", layout="centered", page_icon=":chart_with_upwards_trend:")
+st.subheader(':blue[Zinseszinsrechner]', divider='blue')
 
 st.sidebar.header("Upload Files")
 
