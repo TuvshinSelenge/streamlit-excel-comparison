@@ -213,46 +213,29 @@ def apply_conditional_formatting(output, sheet_name='Sheet2', column='Difference
 # Streamlit UI
 
 def set_page_title(title):
-
-    st.sidebar.markdown(unsafe_allow_html=True, body=f"""
-
+    st.sidebar.markdown(
+        unsafe_allow_html=True,
+        body=f"""
         <iframe height=0 srcdoc="<script>
-
-            const title = window.parent.document.querySelector('title') \
-
+            const title = window.parent.document.querySelector('title')
             const oldObserver = window.parent.titleObserver
-
             if (oldObserver) {{
-
                 oldObserver.disconnect()
-
-            }} \
- 
+            }}
             const newObserver = new MutationObserver(function(mutations) {{
-
                 const target = mutations[0].target
-
                 if (target.text !== '{title}') {{
-
                     target.text = '{title}'
-
                 }}
-
-            }}) \
- 
+            }})
             newObserver.observe(title, {{ childList: true }})
-
-            window.parent.titleObserver = newObserver \
- 
+            window.parent.titleObserver = newObserver
             title.text = '{title}'
-
         </script>" />
+    """
+    )
 
-    """)
- 
- 
-set_page_title('Data Comparison Tool')
- 
+set_page_title("Data Comparison Tool")
 
 st.set_page_config(
     layout="centered",
@@ -261,8 +244,12 @@ st.set_page_config(
 
 st.sidebar.header("Upload Files")
 
-fundline_files = st.sidebar.file_uploader("Upload Fundline files", type=["xlsx"], accept_multiple_files=True)
-excel_files = st.sidebar.file_uploader("Upload Excel files", type=["xlsx"], accept_multiple_files=True)
+fundline_files = st.sidebar.file_uploader(
+    "Upload Fundline files", type=["xlsx"], accept_multiple_files=True
+)
+excel_files = st.sidebar.file_uploader(
+    "Upload Excel files", type=["xlsx"], accept_multiple_files=True
+)
 
 if st.sidebar.button("Run Comparison"):
     if not fundline_files or not excel_files:
@@ -279,7 +266,10 @@ if st.sidebar.button("Run Comparison"):
         if comparison_files:
             st.write("Comparison results:")
             for file_name, file_data in comparison_files:
-                st.download_button(label=f"Download {file_name}", data=file_data, file_name=file_name)
+                st.download_button(
+                    label=f"Download {file_name}", data=file_data, file_name=file_name
+                )
         else:
             st.write("No discrepancies found.")
+
 
