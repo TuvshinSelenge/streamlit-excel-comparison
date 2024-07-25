@@ -255,7 +255,6 @@ set_page_title("Data Comparison Tool")
  
 
 st.set_page_config(
-    page_title="Data Comparison Tool",
     layout="centered",
     page_icon="https://upload.wikimedia.org/wikipedia/de/e/eb/Raiffeisen_%C3%96sterreich_logo.svg",
 )
