@@ -211,7 +211,7 @@ def apply_conditional_formatting(output, sheet_name='Sheet2', column='Difference
     wb.save(output)
 
 # Streamlit UI
-st.set_page_config(page_title="Data Comparison Tool         ", layout="centered", page_icon="https://upload.wikimedia.org/wikipedia/de/e/eb/Raiffeisen_%C3%96sterreich_logo.svg")
+st.set_page_config(page_title="Data Comparison Tool", layout="centered", page_icon="https://upload.wikimedia.org/wikipedia/de/e/eb/Raiffeisen_%C3%96sterreich_logo.svg")
 
 st.sidebar.header("Upload Files")
 
