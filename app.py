@@ -251,7 +251,7 @@ def set_page_title(title):
     """)
  
  
-set_page_title("Data Comparison Tool")
+set_page_title('Data Comparison Tool')
  
 
 st.set_page_config(
