@@ -211,14 +211,20 @@ def apply_conditional_formatting(output, sheet_name='Sheet2', column='Difference
     wb.save(output)
 
 # Streamlit UI
-st.set_page_config(page_title="Data Comparison Tool", layout="centered", page_icon="https://upload.wikimedia.org/wikipedia/de/e/eb/Raiffeisen_%C3%96sterreich_logo.svg")
+import streamlit as st
+
+st.set_page_config(
+    page_title="Data Comparison Tool",
+    layout="centered",
+    page_icon="https://upload.wikimedia.org/wikipedia/de/e/eb/Raiffeisen_%C3%96sterreich_logo.svg",
+)
 
 st.sidebar.header("Upload Files")
 
-fundline_files = st.sidebar.file_uploader("Upload Fundline files", type=['xlsx'], accept_multiple_files=True)
-excel_files = st.sidebar.file_uploader("Upload Excel files", type=['xlsx'], accept_multiple_files=True)
+fundline_files = st.sidebar.file_uploader("Upload Fundline files", type=["xlsx"], accept_multiple_files=True)
+excel_files = st.sidebar.file_uploader("Upload Excel files", type=["xlsx"], accept_multiple_files=True)
 
-if st.sidebar.button('Run Comparison'):
+if st.sidebar.button("Run Comparison"):
     if not fundline_files or not excel_files:
         st.error("Please upload files before running the comparison.")
     else:
@@ -236,3 +242,4 @@ if st.sidebar.button('Run Comparison'):
                 st.download_button(label=f"Download {file_name}", data=file_data, file_name=file_name)
         else:
             st.write("No discrepancies found.")
+
