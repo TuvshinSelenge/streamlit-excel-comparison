@@ -213,7 +213,7 @@ def apply_conditional_formatting(output, sheet_name='Sheet2', column='Difference
 
 # Streamlit UI
 st.set_page_config(
-    page_title="Data Comparison Tool",
+    page_title="Data Comparison Tool for RSC",
     layout="centered",
     page_icon="https://upload.wikimedia.org/wikipedia/de/e/eb/Raiffeisen_%C3%96sterreich_logo.svg",
 )
