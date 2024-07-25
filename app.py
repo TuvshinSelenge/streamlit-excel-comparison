@@ -212,6 +212,12 @@ def apply_conditional_formatting(output, sheet_name='Sheet2', column='Difference
 
 # Streamlit UI
 
+st.set_page_config(
+    page_title="Data Comparison Tool",
+    layout="centered",
+    page_icon="https://upload.wikimedia.org/wikipedia/de/e/eb/Raiffeisen_%C3%96sterreich_logo.svg",
+)
+
 def set_page_title(title):
     st.sidebar.markdown(
         unsafe_allow_html=True,
@@ -236,11 +242,6 @@ def set_page_title(title):
     )
 
 set_page_title("Data Comparison Tool")
-
-st.set_page_config(
-    layout="centered",
-    page_icon="https://upload.wikimedia.org/wikipedia/de/e/eb/Raiffeisen_%C3%96sterreich_logo.svg",
-)
 
 st.sidebar.header("Upload Files")
 
@@ -271,5 +272,4 @@ if st.sidebar.button("Run Comparison"):
                 )
         else:
             st.write("No discrepancies found.")
-
 
