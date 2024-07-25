@@ -211,7 +211,6 @@ def apply_conditional_formatting(output, sheet_name='Sheet2', column='Difference
     wb.save(output)
 
 # Streamlit UI
-import streamlit as st
 
 def set_page_title(title):
 
