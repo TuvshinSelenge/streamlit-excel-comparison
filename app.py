@@ -8,12 +8,6 @@ import io
 import streamlit as st
 import logging
 
-st.set_page_config(
-    page_title="Data Comparison Tool",
-    layout="centered",
-    page_icon="https://upload.wikimedia.org/wikipedia/de/e/eb/Raiffeisen_%C3%96sterreich_logo.svg",
-)
-
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
@@ -219,31 +213,11 @@ def apply_conditional_formatting(output, sheet_name='Sheet2', column='Difference
 
 # Streamlit UI
 
-
-def set_page_title(title):
-    st.sidebar.markdown(
-        unsafe_allow_html=True,
-        body=f"""
-        <iframe height=0 srcdoc="<script>
-            const title = window.parent.document.querySelector('title')
-            const oldObserver = window.parent.titleObserver
-            if (oldObserver) {{
-                oldObserver.disconnect()
-            }}
-            const newObserver = new MutationObserver(function(mutations) {{
-                const target = mutations[0].target
-                if (target.text !== '{title}') {{
-                    target.text = '{title}'
-                }}
-            }})
-            newObserver.observe(title, {{ childList: true }})
-            window.parent.titleObserver = newObserver
-            title.text = '{title}'
-        </script>" />
-    """
-    )
-
-set_page_title("Data Comparison Tool")
+st.set_page_config(
+    page_title="Data Comparison Tool",
+    layout="centered",
+    page_icon="https://upload.wikimedia.org/wikipedia/de/e/eb/Raiffeisen_%C3%96sterreich_logo.svg",
+)
 
 st.sidebar.header("Upload Files")
 
