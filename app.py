@@ -6,13 +6,8 @@ from openpyxl.formatting.rule import CellIsRule
 from fuzzywuzzy import fuzz, process
 import io
 import streamlit as st
-import logging
 
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
-
-# Define column name mappings
 column_mappings = {
     'Isin Code': [
         'ISIN', 'Isin', 'Share ISIN Reference', 'FINANZINSTRUMENT_IDENT', 'Text23'
@@ -178,7 +173,7 @@ def compare_data(fundline_data, excel_data, column_mappings):
                     quartal_aggregated_df.to_excel(writer, sheet_name='Quartal', index=False)
                     comparison_df[['Isin Code', 'Date', fundline_column, excel_column, 'Difference']].to_excel(writer, sheet_name='Einzeln', index=False)
 
-                # Apply conditional formatting
+                #appyling formatting if they are below or up certain value
                 apply_conditional_formatting(output, sheet_name='Quartal', column='D', lower_threshold=-20, upper_threshold=20)
                 apply_conditional_formatting(output, sheet_name='Einzeln', column='E', lower_threshold=-20, upper_threshold=20)
 
