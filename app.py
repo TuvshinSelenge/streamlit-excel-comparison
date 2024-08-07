@@ -92,9 +92,9 @@ def aggregate_data(data, column_name):
         if 'Isin Code' in df.columns and column_name in df.columns:
             aggregated_df = df.groupby('Isin Code')[column_name].sum().reset_index()
             aggregated_data[file_name] = aggregated_df
-            logging.info(f"Aggregated {file_name} successfully with shape {aggregated_df.shape}")
+            #logging.info(f"Aggregated {file_name} successfully with shape {aggregated_df.shape}")
         else:
-            logging.info(f"Required columns not found in {file_name}")
+            #logging.info(f"Required columns not found in {file_name}")
     return aggregated_data
 
 def match_files(fundline_files, excel_files):
