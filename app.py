@@ -18,7 +18,7 @@ column_mappings = {
         'Comm. Amount', 'Provision', 'Betrag (€)', 'Vergütung', 'EURMonat',
         'Client Trailer Fees Amount In Consolidated Currency', 'Amount In Agreement Ccy', 'Bepro',
         'Provisionsbetrag in Währung', 'Fee', 'BPROV', 'BpkEUR', 'Kommissionsbetrag', 'Commission Due Payment CCY', 'Fee (Payment Currency)', 'Amount In Partner Currency',
-        'Betrag (EUR)', 'Trailer fee (base currency)', 'Trailer fee\n(base currency)', 'trailer fees in payment ccy', 'trailer fee', 'eurmonat', 'erwartete prov. eur',
+        'Betrag (EUR)', 'Trailer Fee', 'EURMonat', 'Erwartete Prov. Eur', 'trailer fee (base currency)', 'trailer fee\n(base currency)'
     ],
     'Date': [
         'Date', 'Datum', 'Booking Date', 'End-Datum', 'Period End Date', 'Holding as of', 'STICHTAG', 'Period', 'Datum_str', 'Positionsdatum', 'Stichtag', 'Retrocession Date'
