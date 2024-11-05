@@ -21,7 +21,8 @@ column_mappings = {
         'Betrag (EUR)', 'Trailer Fee', 'EURMonat', 'Erwartete Prov. Eur', 'trailer fee (base currency)', 'trailer fee\n(base currency)'
     ],
     'Date': [
-        'Date', 'Datum', 'Booking Date', 'End-Datum', 'Period End Date', 'Holding as of', 'STICHTAG', 'Period', 'Datum_str', 'Positionsdatum', 'Stichtag', 'Retrocession Date'
+        'Date', 'Datum', 'Booking Date', 'End-Datum', 'Period End Date', 'Holding as of', 'STICHTAG', 'Period', 'Datum_str', 'Positionsdatum', 'Stichtag', 'Retrocession Date', 'datum', 'end-datum', 'date', 'booking date', 'period end date',
+        'holding as of', 'stichtag', 'period', 'datum_str', 'positionsdatum', 'retrocession date', 'Period:', 'Statement Date'
     ]
 }
 
