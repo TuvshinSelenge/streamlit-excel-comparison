@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 column_mappings = {
     'Isin Code': [
-        'ISIN', 'Isin', 'Share ISIN Reference', 'FINANZINSTRUMENT_IDENT', 'Text23'
+        'isin', 'isin code', 'Isin', 'Share ISIN Reference', 'FINANZINSTRUMENT_IDENT', 'Text23', 'ISIN'
     ],
     'Provision': [
         'Comm. Amount', 'Provision', 'Betrag (€)', 'Vergütung', 'EURMonat',
